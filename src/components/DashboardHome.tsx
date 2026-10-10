@@ -24,6 +24,7 @@ interface DashboardHomeProps {
   onToggleCompleteTask: (taskId: string) => void;
   onOpenReport: () => void;
   onOpenProfile: () => void;
+  onAddStudySession?: (durationMinutes: number) => void;
 }
 
 export const DashboardHome: React.FC<DashboardHomeProps> = ({
@@ -34,7 +35,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   onNavigateToTab,
   onToggleCompleteTask,
   onOpenReport,
-  onOpenProfile
+  onOpenProfile,
+  onAddStudySession
 }) => {
   // Study timer state
   const [isStudying, setIsStudying] = useState(false);
@@ -52,6 +54,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
   const handleStopTimer = () => {
     setIsStudying(false);
     if (timerInterval) clearInterval(timerInterval);
+    if (studySeconds >= 10 && onAddStudySession) {
+      const mins = Math.max(1, Math.round(studySeconds / 60));
+      onAddStudySession(mins);
+    }
+    setStudySeconds(0);
   };
 
   const formatTimer = (sec: number) => {

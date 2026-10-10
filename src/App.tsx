@@ -9,8 +9,9 @@ import { ProgressDashboard } from './components/ProgressDashboard';
 import { AcademicReportModal } from './components/AcademicReportModal';
 import { SyncCloudModal } from './components/SyncCloudModal';
 import { ProfileSettingsModal } from './components/ProfileSettingsModal';
-import { SUBJECTS, INITIAL_CHALLENGES } from './data/curriculum';
+import { SUBJECTS } from './data/curriculum';
 import { storage } from './lib/storage';
+import { requestAIChallenge, requestSocraticChat } from './services/aiService';
 import { 
   AcademicGrade, 
   AcademicTask, 
@@ -18,6 +19,7 @@ import {
   ChatMessage, 
   QuizAttempt, 
   StudentProfile, 
+  StudySession,
   SubjectId, 
   ThemeMode 
 } from './types';
@@ -33,7 +35,7 @@ export default function App() {
   const [tasks, setTasks] = useState<AcademicTask[]>(storage.getTasks());
   const [grades, setGrades] = useState<AcademicGrade[]>(storage.getGrades());
   const [chats, setChats] = useState<Record<SubjectId, ChatMessage[]>>(storage.getChats());
-  const [challenges, setChallenges] = useState<Challenge[]>(INITIAL_CHALLENGES);
+  const [challenges, setChallenges] = useState<Challenge[]>(storage.getChallenges());
   const [attempts, setAttempts] = useState<QuizAttempt[]>(storage.getAttempts());
   const [sessions, setSessions] = useState(storage.getSessions());
 
@@ -96,25 +98,17 @@ export default function App() {
     setIsSendingChat(true);
 
     try {
-      const response = await fetch('/api/tutor/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subjectId: selectedSubjectId,
-          message: text,
-          topicName: topicName || 'General 2º ESO',
-          conversationHistory: currentSubjectMessages.slice(-6).map(m => ({
-            role: m.role,
-            content: m.content
-          }))
-        })
-      });
+      const historyPayload = currentSubjectMessages.slice(-6).map(m => ({
+        role: m.role,
+        content: m.content
+      }));
 
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await requestSocraticChat(
+        selectedSubjectId,
+        text,
+        topicName || 'General 2º ESO',
+        historyPayload
+      );
 
       const assistantMessage: ChatMessage = {
         id: 'msg-tutor-' + Date.now(),
@@ -136,27 +130,6 @@ export default function App() {
       storage.saveChats(finalChats);
     } catch (err) {
       console.error('Error fetching tutor response:', err);
-
-      const fallbackMsg: ChatMessage = {
-        id: 'msg-err-' + Date.now(),
-        role: 'assistant',
-        content: `Como tutor socrático de 2º ESO para ${selectedSubjectId}, quiero proponerte que desgloses tu duda: ¿cuál es el dato clave que te pide calcular o identificar el enunciado?`,
-        timestamp: new Date().toISOString(),
-        subjectId: selectedSubjectId,
-        hints: [
-          'Vuelve a leer la pregunta e identifica la palabra clave.',
-          'Revisa el ejemplo resuelto en tu libro de texto.',
-          'Escribe tu primer paso o cálculo y te diré si vas por buen camino.'
-        ],
-        reflectionQuestion: '¿Por qué paso crees que es más adecuado comenzar?'
-      };
-
-      const finalChats = {
-        ...chats,
-        [selectedSubjectId]: [...currentSubjectMessages, fallbackMsg]
-      };
-      setChats(finalChats);
-      storage.saveChats(finalChats);
     } finally {
       setIsSendingChat(false);
     }
@@ -172,35 +145,17 @@ export default function App() {
   };
 
   // AI Challenge Generator
-  const handleGenerateAIChallenge = async (subjectId: SubjectId, topicName: string): Promise<Challenge | null> => {
+  const handleGenerateAIChallenge = async (
+    subjectId: SubjectId, 
+    topicName: string, 
+    topicId?: string
+  ): Promise<Challenge | null> => {
     setIsGeneratingAIChallenge(true);
     try {
-      const response = await fetch('/api/tutor/challenge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subjectId,
-          topicName,
-          difficulty: 'medio'
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to generate challenge');
-
-      const data = await response.json();
-      const newChallenge: Challenge = {
-        id: 'ch-ai-' + Date.now(),
-        subjectId,
-        topicName,
-        question: data.question,
-        options: data.options,
-        correctIndex: data.correctIndex,
-        explanation: data.explanation,
-        hints: data.hints || [],
-        difficulty: 'medio'
-      };
-
-      setChallenges(prev => [newChallenge, ...prev]);
+      const newChallenge = await requestAIChallenge(subjectId, topicName, topicId, 'medio');
+      const updated = [newChallenge, ...challenges];
+      setChallenges(updated);
+      storage.saveChallenges(updated);
       return newChallenge;
     } catch (err) {
       console.error('Error generating AI challenge:', err);
@@ -288,6 +243,35 @@ export default function App() {
     storage.saveGrades([]);
   };
 
+  const handleResetMonthlyProgress = (yearMonth?: string) => {
+    storage.resetMonthlyProgress(yearMonth);
+    setSessions(storage.getSessions());
+  };
+
+  const handleResetAllProgress = () => {
+    storage.resetAllProgress();
+    setSessions([]);
+    setAttempts([]);
+  };
+
+  const handleAddStudySession = (session: StudySession) => {
+    storage.addSession(session);
+    setSessions(storage.getSessions());
+  };
+
+  const handleTimerStudySession = (durationMinutes: number) => {
+    const newSession: StudySession = {
+      id: 'ses-' + Date.now(),
+      subjectId: selectedSubjectId,
+      durationMinutes,
+      date: new Date().toISOString().slice(0, 10),
+      topicCovered: 'Estudio guiado con temporizador',
+      exercisesDone: 3
+    };
+    storage.addSession(newSession);
+    setSessions(storage.getSessions());
+  };
+
   const handleDataImported = () => {
     setProfile(storage.getProfile());
     setTasks(storage.getTasks());
@@ -337,6 +321,7 @@ export default function App() {
             onToggleCompleteTask={handleToggleCompleteTask}
             onOpenReport={() => setIsReportModalOpen(true)}
             onOpenProfile={() => setIsProfileModalOpen(true)}
+            onAddStudySession={handleTimerStudySession}
           />
         )}
 
@@ -379,7 +364,11 @@ export default function App() {
             subjects={SUBJECTS}
             grades={grades}
             sessions={sessions}
+            attempts={attempts}
             onAddGrade={handleAddGrade}
+            onResetMonthlyProgress={handleResetMonthlyProgress}
+            onResetAllProgress={handleResetAllProgress}
+            onAddSession={handleAddStudySession}
           />
         )}
       </main>

@@ -34,6 +34,13 @@ export const SocraticTutorView: React.FC<SocraticTutorViewProps> = ({
   const [revealedHints, setRevealedHints] = useState<Record<string, number>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Auto sync topic when subject changes
+  useEffect(() => {
+    if (subject.topics && subject.topics.length > 0) {
+      setSelectedTopicName(subject.topics[0].name);
+    }
+  }, [subject.id]);
+
   // Auto scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,10 +68,37 @@ export const SocraticTutorView: React.FC<SocraticTutorViewProps> = ({
     setInputText(promptText);
   };
 
+  const quickPrompts = subject.id === 'ingles' ? [
+    { icon: '🇬🇧', label: 'Past Simple vs Continuous', text: 'Explícame cuándo usar Past Simple y cuándo Past Continuous con ejemplos claros.' },
+    { icon: '📝', label: 'Verbos irregulares', text: 'Tengo dudas con los verbos irregulares en pasado (go, see, have, buy...). ¿Cómo los practico?' },
+    { icon: '🔍', label: 'Preguntas con do/did', text: '¿Cómo se forman preguntas y oraciones negativas en inglés con do / does / did?' },
+    { icon: '🎯', label: 'Práctica de oraciones', text: `Ponme una frase en inglés sobre ${selectedTopicName || 'la unidad'} para que intente completarla.` }
+  ] : subject.id === 'lengua' ? [
+    { icon: '📖', label: 'Sujeto y CD', text: '¿Cómo distingo el Sujeto del Complemento Directo (CD) en una oración simple?' },
+    { icon: '✍️', label: 'Análisis sintáctico', text: 'Tengo que analizar sintácticamente una oración y no sé por dónde empezar. ¿Cuáles son los pasos?' },
+    { icon: '📝', label: 'Clases de palabras', text: '¿Cómo diferencio un determinante de un pronombre en una frase?' },
+    { icon: '🎯', label: 'Ortografía y acentuación', text: 'Explícame las reglas de acentuación de palabras agudas, llanas y esdrújulas con ejemplos.' }
+  ] : subject.id === 'geografia-historia' ? [
+    { icon: '🏰', label: 'Reconquista y Cuenca', text: '¿Por qué fue crucial la conquista de Cuenca en 1177 por Alfonso VIII y qué supuso el Fuero de Cuenca?' },
+    { icon: '🕌', label: 'Al-Ándalus', text: '¿Cuáles fueron las etapas principales de Al-Ándalus (Emirato, Califato, Taifas)?' },
+    { icon: '🏛️', label: 'Románico vs Gótico', text: '¿Qué diferencias arquitectónicas principales hay entre una iglesia románica y una catedral gótica?' },
+    { icon: '🌍', label: 'Población y ciudades', text: `Explícame las ideas clave de ${selectedTopicName || 'este bloque'} para preparar el examen.` }
+  ] : subject.id === 'fisica-quimica' ? [
+    { icon: '🔬', label: 'Factores de conversión', text: '¿Cómo se hacen los factores de conversión para pasar de km/h a m/s paso a paso?' },
+    { icon: '⚗️', label: 'Cambio físico vs químico', text: '¿Cuál es la diferencia entre un cambio físico y un cambio químico? Ponme ejemplos.' },
+    { icon: '⚖️', label: 'Densidad y unidades SI', text: '¿Cómo se relacionan masa, volumen y densidad? ¿En qué unidades se miden en el SI?' },
+    { icon: '🧪', label: 'Estados de la materia', text: `¿Me puedes explicar los conceptos clave de ${selectedTopicName || 'este tema'}?` }
+  ] : [
+    { icon: '➕', label: 'Regla de los signos', text: 'Explícame la regla de los signos en operaciones combinadas con números enteros.' },
+    { icon: '➗', label: 'Ecuaciones de 1er grado', text: '¿Qué pasos debo seguir para resolver una ecuación con paréntesis y denominadores?' },
+    { icon: '📐', label: 'Teorema de Pitágoras', text: '¿Cómo se aplica el Teorema de Pitágoras para calcular la hipotenusa o un cateto?' },
+    { icon: '🎯', label: 'Ejercicio de examen', text: `Ponme un ejercicio tipo examen de ${selectedTopicName || 'este tema'} para practicar.` }
+  ];
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-5xl mx-auto px-4 sm:px-6 py-4">
       {/* Tutor Header Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-3 shadow-xs shrink-0">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-2 shadow-xs shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl border border-slate-200 dark:border-slate-700 shrink-0">
@@ -105,11 +139,34 @@ export const SocraticTutorView: React.FC<SocraticTutorViewProps> = ({
           </div>
         </div>
 
+        {/* Topic Selector Filter Pill Bar */}
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <span className="text-[11px] font-semibold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+            Unidad activa:
+          </span>
+          {subject.topics.map((t) => {
+            const isSelected = selectedTopicName === t.name;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setSelectedTopicName(t.name)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                {t.name}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Socratic Covenant Notice */}
-        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+        <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
           <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>
-            <strong>Método Socrático:</strong> Tu tutor nunca resolverá las tareas por ti. Te guiará con pistas graduales y preguntas para que desarrolles tu propio razonamiento.
+            <strong>Método Socrático:</strong> {subject.tutorName} te guiará con pistas y preguntas orientadoras para que comprendas {subject.name} por ti mismo sin darte la respuesta hecha.
           </span>
         </div>
       </div>
@@ -125,35 +182,26 @@ export const SocraticTutorView: React.FC<SocraticTutorViewProps> = ({
               ¿En qué puedo ayudarte hoy en {subject.name}?
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mb-4">
-              Escribe tu duda, pega el enunciado de un ejercicio con el que te hayas atascado, o pide una explicación de los temas de 2º de ESO.
+              Unidad actual: <strong className="text-blue-600 dark:text-blue-400">{selectedTopicName}</strong>. Escribe tu duda o usa las sugerencias rápidas:
             </p>
 
-            {/* Quick prompt suggestions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg text-left">
-              <button
-                onClick={() => handleQuickPrompt(`Tengo dudas con el tema de ${selectedTopicName}. ¿Me puedes explicar la idea principal con un ejemplo?`)}
-                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                💡 "Explícame la idea principal con un ejemplo sencillo..."
-              </button>
-              <button
-                onClick={() => handleQuickPrompt('Tengo que resolver este ejercicio pero no sé por dónde empezar: ')}
-                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                🔍 "No sé por dónde empezar este ejercicio..."
-              </button>
-              <button
-                onClick={() => handleQuickPrompt('¿Qué fórmula o regla se aplica para resolver esto?')}
-                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                📐 "¿Qué fórmula o regla debo usar?"
-              </button>
-              <button
-                onClick={() => handleQuickPrompt(`Ponme un ejercicio tipo examen de ${selectedTopicName} para practicar.`)}
-                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                🎯 "Ponme un ejercicio tipo examen para practicar..."
-              </button>
+            {/* Subject-specific quick prompt suggestions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl text-left">
+              {quickPrompts.map((qp, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleQuickPrompt(qp.text)}
+                  className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex flex-col gap-0.5"
+                >
+                  <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>{qp.icon}</span>
+                    <span>{qp.label}</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                    "{qp.text}"
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         ) : (

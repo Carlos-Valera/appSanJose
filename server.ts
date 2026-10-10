@@ -49,50 +49,66 @@ app.post('/api/tutor/chat', async (req: Request, res: Response): Promise<void> =
 
     const subjectTitle = SUBJECT_NAMES[subjectId] || subjectId;
 
-    const systemInstruction = `Eres el TUTOR PERSONAL SOCRÁTICO de la asignatura "${subjectTitle}" para un alumno de 2º de Educación Secundaria Obligatoria (ESO) del instituto público IES San José en Cuenca, Castilla-La Mancha (España).
+    let subjectRule = '';
+    let fallbackData = {
+      explanation: `¡Hola! Como tutor socrático de ${subjectTitle} en el IES San José de Cuenca, estoy aquí para guiarte paso a paso. Analicemos juntos tu duda: ¿cuál es el concepto esencial que identificas en este ejercicio?`,
+      keyConcept: topicName || 'Razonamiento Curricular 2º ESO',
+      hints: [
+        'Vuelve a leer el enunciado con calma e identifica qué te están pidiendo exactamente.',
+        'Recuerda las reglas y conceptos trabajados esta semana en clase.',
+        'Plantea tu primera hipótesis o intento y lo revisamos juntos.'
+      ],
+      reflectionQuestion: '¿Cuál crees que sería el primer paso lógico para empezar a abordarlo?'
+    };
 
-MARCO CURRICULAR Y LEGAL:
-- Te riges por el currículo oficial LOMLOE de Castilla-La Mancha (Decreto 82/2022 de 12 de julio).
-- Nivel de comprensión: Alumno de 13 a 14 años.
-- Contexto: IES San José de Cuenca (sé cercano a la realidad escolar de Cuenca cuando surjan ejemplos).
+    if (subjectId === 'ingles') {
+      subjectRule = 'Eres Ms. Davies, profesora y tutora socrática de Inglés para 2º ESO. NUNCA menciones "calcular", "fórmulas", "incógnitas" ni operaciones matemáticas. Es una clase de LENGUA EXTRANJERA: INGLÉS. Orienta sobre tiempos verbales (Past Simple, Present Continuous, Irregulars), vocabulario, comparativos, preposiciones y pronunciación.';
+      fallbackData = {
+        explanation: 'Hello! I\'m Ms. Davies, your English tutor for 2º ESO. Let\'s work through this step by step: what verb structure, tense, or vocabulary word are you practicing in this exercise?',
+        keyConcept: 'Gramática y Vocabulario de Inglés (2º ESO)',
+        hints: [
+          'Hint 1: Identify the main subject and the verb of the sentence.',
+          'Hint 2: Look for time adverbs (yesterday, now, always, every day) to choose the right tense.',
+          'Hint 3: In English sentences, remember word order: Subject + Verb + Complements (S-V-O).'
+        ],
+        reflectionQuestion: 'Who is the subject of your sentence, and what action is taking place?'
+      };
+    } else if (subjectId === 'lengua') {
+      subjectRule = 'Eres D. Santiago, tutor de Lengua Castellana y Literatura para 2º ESO. Orienta sobre sintaxis (Sujeto, CD, CI, CC), morfología, ortografía y literatura sin usar términos de cálculo.';
+    } else if (subjectId === 'geografia-historia') {
+      subjectRule = 'Eres Dña. Carmen, tutora de Geografía e Historia para 2º ESO. Orienta sobre historia medieval (Al-Ándalus, Reconquista, Alfonso VIII, Cuenca, feudalismo, románico/gótico) y geografía urbana.';
+    } else if (subjectId === 'fisica-quimica') {
+      subjectRule = 'Eres D. Roberto, tutor de Física y Química de 2º ESO. Orienta sobre el método científico, Sistema Internacional, densidad, estados de la materia y átomos.';
+    } else {
+      subjectRule = 'Eres Dña. Elena, tutora de Matemáticas de 2º ESO. Orienta sobre números enteros, álgebra, fracciones y geometría.';
+    }
 
-REGLA DE ORO INQUEBRANTABLE (MÉTODO SOCRÁTICO):
-1. TIENES TOTALMENTE PROHIBIDO resolverle los deberes directamente al alumno o darle el resultado numérico/sintáctico final.
-2. NUNCA redactes trabajos, comentarios de texto ni respuestas de examen por él.
-3. Tu objetivo pedagógico es guiar su pensamiento mediante preguntas orientadoras, pistas graduales y desglose de pasos.
-4. Si el alumno te copia un ejercicio, pregúntale qué datos reconoce, qué fórmula o concepto cree que debe aplicar, o indícale el primer paso sin resolverlo.
-5. Felicita sus aciertos intermedios con entusiasmo educativo y corrige con delicadeza los errores conceptuales.
+    const systemInstruction = `Eres el TUTOR PERSONAL SOCRÁTICO de "${subjectTitle}" para un estudiante de 2º ESO del IES San José en Cuenca (Castilla-La Mancha).
+Currículo: LOMLOE Decreto 82/2022 de Castilla-La Mancha para alumnos de 13-14 años.
+${subjectRule}
 
-FORMATO DE TU RESPUESTA:
-Debes responder en formato JSON estrictamente válido con los siguientes campos:
+REGLA DE ORO (MÉTODO SOCRÁTICO):
+1. PROHIBIDO resolverle los deberes directamente al alumno o darle la respuesta final.
+2. Tu objetivo pedagógico es guiar su pensamiento mediante preguntas orientadoras y pistas graduales.
+3. Adapta el vocabulario a 2º de la ESO.
+4. Responde SIEMPRE en formato JSON con la siguiente estructura:
 {
-  "explanation": "Tu mensaje pedagógico socrático en español para el alumno, claro, motivador y explicando el concepto clave sin resolver el ejercicio.",
-  "keyConcept": "Nombre breve del concepto curricular clave (ej: 'Teorema de Pitágoras', 'Complemento Directo', 'Factores de conversión', 'Past Continuous')",
-  "hints": [
-    "Pista 1: Qué concepto o fórmula inicial debes recordar",
-    "Pista 2: Cómo dar el primer paso o plantear el cálculo",
-    "Pista 3: Cómo verificar si vas por buen camino"
-  ],
-  "reflectionQuestion": "Una pregunta directa y reflexiva para que el alumno te responda con su propio razonamiento."
+  "explanation": "Tu orientación pedagógica socrática clara, motivadora y sin dar la solución directa.",
+  "keyConcept": "Nombre breve del concepto curricular clave",
+  "hints": ["Pista 1 útil", "Pista 2 progresiva", "Pista 3 para verificar"],
+  "reflectionQuestion": "Pregunta reflexiva directa para que el alumno razone y responda."
 }`;
 
     if (!apiKey) {
-      // Fallback socratic response if API key is temporarily absent
-      res.json({
-        explanation: `¡Hola! Como tutor socrático de ${subjectTitle} en el IES San José, quiero ayudarte a entenderlo paso a paso por ti mismo. Analicemos juntos tu duda: ¿cuáles son los datos o palabras clave que identificas en este ejercicio?`,
-        keyConcept: topicName || 'Razonamiento Curricular 2º ESO',
-        hints: [
-          'Identifica qué te está pidiendo exactamente el enunciado.',
-          'Recuerda las reglas y conceptos que habéis visto esta semana en clase.',
-          'Plantea tu primera hipótesis o cálculo y compártela conmigo para revisarla juntos.'
-        ],
-        reflectionQuestion: '¿Cuál crees que sería el primer paso para empezar a resolverlo?'
-      });
+      res.json(fallbackData);
       return;
     }
 
-    // Format chat history into contents
-    const promptText = `Tema actual: ${topicName || 'General 2º ESO'}\nPregunta/Duda del alumno: ${message}`;
+    const recentHistory = Array.isArray(conversationHistory)
+      ? conversationHistory.slice(-4).map((h: any) => `${h.role === 'user' ? 'Alumno' : 'Tutor'}: ${h.content}`).join('\n')
+      : '';
+
+    const promptText = `Tema del bloque: ${topicName || 'Temario 2º ESO'}\nHistorial reciente:\n${recentHistory}\n\nNueva consulta del alumno: ${message}`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.8-flash',
@@ -121,16 +137,7 @@ Debes responder en formato JSON estrictamente válido con los siguientes campos:
     try {
       parsedData = JSON.parse(responseText);
     } catch {
-      parsedData = {
-        explanation: responseText,
-        keyConcept: topicName || 'Concepto 2º ESO',
-        hints: [
-          'Revisa qué datos tienes y qué fórmula se aplica.',
-          'Haz un primer intento por pasos.',
-          'Comprueba que las unidades y signos sean coherentes.'
-        ],
-        reflectionQuestion: '¿Qué parte te parece la más retadora?'
-      };
+      parsedData = fallbackData;
     }
 
     res.json(parsedData);
@@ -151,19 +158,19 @@ app.post('/api/tutor/challenge', async (req: Request, res: Response): Promise<vo
 
     if (!apiKey) {
       res.json({
-        question: `[2º ESO ${subjectTitle}] ¿Cuál de las siguientes afirmaciones sobre "${topicName}" es correcta según el temario de Castilla-La Mancha?`,
+        question: `[2º ESO ${subjectTitle}] Respecto a los saberes básicos de "${topicName}", ¿cuál de las siguientes afirmaciones es correcta según el currículo LOMLOE de Castilla-La Mancha?`,
         options: [
-          'Opción A: La regla básica se cumple en todos los casos estudiados.',
-          'Opción B: Es un concepto exclusivo de cursos superiores.',
-          'Opción C: Solo se aplica a problemas teóricos sin aplicación práctica.',
-          'Opción D: Requiere memorización sin necesidad de comprensión.'
+          'El análisis razonado de los datos y la aplicación justificada de la regla/fórmula conducen a la solución correcta.',
+          'Es un concepto puramente memorístico sin ninguna utilidad práctica en la vida cotidiana.',
+          'Contradice los principios metodológicos y los criterios de evaluación del curso.',
+          'Solo se debe resolver mediante tanteo aleatorio sin ningún paso intermedio.'
         ],
         correctIndex: 0,
-        explanation: `En 2º de ESO para ${subjectTitle}, comprender los fundamentos de ${topicName} permite resolver problemas de la vida cotidiana y avanzar con solidez.`,
+        explanation: `En 2º de ESO para ${subjectTitle}, comprender los fundamentos de ${topicName} permite resolver problemas competenciales con rigor y criterio propio.`,
         hints: [
-          'Piensa en la definición explicada en tu libro de texto.',
-          'Descarta las opciones que contradicen el método razonado.',
-          'Fíjate en las palabras clave del enunciado.'
+          'Piensa en la definición explicada en tu libro de texto y apuntes de clase.',
+          'Descarta las opciones que contradicen el método de razonamiento científico y humanístico.',
+          'Fíjate en las palabras clave del enunciado y en el procedimiento paso a paso.'
         ]
       });
       return;

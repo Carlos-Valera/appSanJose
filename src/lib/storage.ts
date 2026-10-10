@@ -1,6 +1,7 @@
 import { 
   AcademicGrade, 
   AcademicTask, 
+  Challenge,
   ChatMessage, 
   QuizAttempt, 
   StudentProfile, 
@@ -8,6 +9,7 @@ import {
   SubjectId, 
   ThemeMode 
 } from '../types';
+import { INITIAL_CHALLENGES } from '../data/curriculum';
 
 const STORAGE_KEYS = {
   PROFILE: 'tutorsanjose_profile_v1',
@@ -15,9 +17,11 @@ const STORAGE_KEYS = {
   GRADES: 'tutorsanjose_grades_v1',
   CHATS: 'tutorsanjose_chats_v1',
   ATTEMPTS: 'tutorsanjose_attempts_v1',
+  CHALLENGES: 'tutorsanjose_challenges_v1',
   SESSIONS: 'tutorsanjose_sessions_v1',
   THEME: 'tutorsanjose_theme_v1',
-  LAST_SYNC: 'tutorsanjose_last_sync_v1'
+  LAST_SYNC: 'tutorsanjose_last_sync_v1',
+  CUSTOM_API_KEY: 'tutorsanjose_custom_gemini_api_key_v1'
 };
 
 const DEFAULT_PROFILE: StudentProfile = {
@@ -266,6 +270,32 @@ export const storage = {
     localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(attempts));
   },
 
+  getChallenges(): Challenge[] {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.CHALLENGES);
+      if (!data) return INITIAL_CHALLENGES;
+      const customList = JSON.parse(data) as Challenge[];
+      // Merge initial challenges with any custom generated challenges
+      const customIds = new Set(customList.map(c => c.id));
+      const merged = [...customList];
+      for (const init of INITIAL_CHALLENGES) {
+        if (!customIds.has(init.id)) {
+          merged.push(init);
+        }
+      }
+      return merged;
+    } catch {
+      return INITIAL_CHALLENGES;
+    }
+  },
+  saveChallenges(challenges: Challenge[]): void {
+    try {
+      localStorage.setItem(STORAGE_KEYS.CHALLENGES, JSON.stringify(challenges));
+    } catch (e) {
+      console.warn('Error saving challenges to storage:', e);
+    }
+  },
+
   getSessions(): StudySession[] {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.SESSIONS);
@@ -295,6 +325,36 @@ export const storage = {
   },
   setLastSync(timestamp: string): void {
     localStorage.setItem(STORAGE_KEYS.LAST_SYNC, timestamp);
+  },
+
+  getCustomApiKey(): string {
+    return localStorage.getItem(STORAGE_KEYS.CUSTOM_API_KEY) || '';
+  },
+  saveCustomApiKey(key: string): void {
+    if (key.trim()) {
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_API_KEY, key.trim());
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CUSTOM_API_KEY);
+    }
+  },
+
+  // Reset progress methods
+  resetMonthlyProgress(yearMonth?: string): void {
+    const targetMonth = yearMonth || new Date().toISOString().slice(0, 7); // e.g. "2026-10"
+    const currentSessions = this.getSessions();
+    const remaining = currentSessions.filter(s => !s.date.startsWith(targetMonth));
+    this.saveSessions(remaining);
+  },
+
+  resetAllProgress(): void {
+    this.saveSessions([]);
+    this.saveAttempts([]);
+  },
+
+  addSession(session: StudySession): void {
+    const existing = this.getSessions();
+    const updated = [session, ...existing];
+    this.saveSessions(updated);
   },
 
   // Export complete academic database as JSON

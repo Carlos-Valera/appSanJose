@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, School, Trash2, Check, X, Sparkles, BookOpen } from 'lucide-react';
 import { StudentProfile } from '../types';
+import { storage } from '../lib/storage';
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
@@ -53,14 +54,22 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     onClose();
   };
 
+  const [apiKeyInput, setApiKeyInput] = useState(storage.getCustomApiKey());
+
+  const handleSaveApiKey = () => {
+    storage.saveCustomApiKey(apiKeyInput);
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2000);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Datos del Alumno y Centro
+              Datos del Alumno y Ajustes
             </h3>
           </div>
           <button
@@ -144,7 +153,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
@@ -168,15 +177,44 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
           </div>
         </form>
 
+        {/* Optional Gemini API Key Section for personal Vercel deployments */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              Clave de API Gemini (opcional para Vercel)
+            </span>
+            <span className="text-[10px] text-slate-400">Personal</span>
+          </div>
+          <p className="text-[11px] text-slate-400">
+            Si despliegas en tu propio Vercel y deseas que el tutor socrático y generador de retos usen IA directa sin configurar variables de servidor:
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              placeholder="AIzaSy..."
+              className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-[11px]"
+            />
+            <button
+              type="button"
+              onClick={handleSaveApiKey}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-lg text-[11px] font-semibold"
+            >
+              Guardar clave
+            </button>
+          </div>
+        </div>
+
         {/* Clear Sample Data Section */}
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
           <div className="flex items-center justify-between">
             <div>
               <span className="font-semibold text-slate-800 dark:text-slate-200 block">
-                Tareas y exámenes de ejemplo
+                Limpiar datos de prueba iniciales
               </span>
               <span className="text-[11px] text-slate-400 block">
-                Fueron precargadas para mostrar cómo funciona la app.
+                Vacía las tareas y notas precargadas de ejemplo.
               </span>
             </div>
 

@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Award, 
   CheckCircle2, 
   XCircle, 
   Lightbulb, 
-  RotateCw, 
   Sparkles, 
-  Filter,
-  Check,
-  ArrowRight
+  Filter, 
+  ArrowRight,
+  ArrowLeft,
+  ChevronRight,
+  Check
 } from 'lucide-react';
 import { Challenge, QuizAttempt, Subject, SubjectId } from '../types';
 
@@ -19,7 +20,7 @@ interface ChallengeViewProps {
   challenges: Challenge[];
   attempts: QuizAttempt[];
   onSaveAttempt: (attempt: QuizAttempt) => void;
-  onGenerateAIChallenge: (subjectId: SubjectId, topicName: string) => Promise<Challenge | null>;
+  onGenerateAIChallenge: (subjectId: SubjectId, topicName: string, topicId?: string) => Promise<Challenge | null>;
   isGeneratingAI: boolean;
 }
 
@@ -39,15 +40,40 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [showHintIndex, setShowHintIndex] = useState(0);
+  const [noticeMsg, setNoticeMsg] = useState<string>('');
+
+  // Reset indices and options when subject changes
+  useEffect(() => {
+    setSelectedTopicId('');
+    setActiveChallengeIndex(0);
+    setSelectedOption(null);
+    setIsAnswerSubmitted(false);
+    setShowHintIndex(0);
+  }, [selectedSubjectId]);
 
   // Filter challenges for current subject & topic
   const filteredChallenges = challenges.filter(c => {
     if (c.subjectId !== selectedSubjectId) return false;
-    if (selectedTopicId && c.topicId && c.topicId !== selectedTopicId) return false;
+    if (selectedTopicId) {
+      return c.topicId === selectedTopicId;
+    }
     return true;
   });
 
-  const activeChallenge = filteredChallenges[activeChallengeIndex] || filteredChallenges[0];
+  // Clamp activeChallengeIndex to valid range
+  const safeIndex = activeChallengeIndex >= filteredChallenges.length 
+    ? Math.max(0, filteredChallenges.length - 1) 
+    : activeChallengeIndex;
+
+  const activeChallenge = filteredChallenges[safeIndex];
+
+  const handleSelectTopic = (topicId: string) => {
+    setSelectedTopicId(topicId);
+    setActiveChallengeIndex(0);
+    setSelectedOption(null);
+    setIsAnswerSubmitted(false);
+    setShowHintIndex(0);
+  };
 
   const handleSelectOption = (idx: number) => {
     if (isAnswerSubmitted) return;
@@ -76,21 +102,44 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
     setSelectedOption(null);
     setIsAnswerSubmitted(false);
     setShowHintIndex(0);
-    if (activeChallengeIndex < filteredChallenges.length - 1) {
-      setActiveChallengeIndex(prev => prev + 1);
+    if (safeIndex < filteredChallenges.length - 1) {
+      setActiveChallengeIndex(safeIndex + 1);
     } else {
       setActiveChallengeIndex(0);
     }
   };
 
+  const handlePrevChallenge = () => {
+    setSelectedOption(null);
+    setIsAnswerSubmitted(false);
+    setShowHintIndex(0);
+    if (safeIndex > 0) {
+      setActiveChallengeIndex(safeIndex - 1);
+    } else {
+      setActiveChallengeIndex(filteredChallenges.length - 1);
+    }
+  };
+
+  const handleJumpToChallenge = (idx: number) => {
+    setSelectedOption(null);
+    setIsAnswerSubmitted(false);
+    setShowHintIndex(0);
+    setActiveChallengeIndex(idx);
+  };
+
   const handleGenerateNew = async () => {
     const topic = currentSubject.topics.find(t => t.id === selectedTopicId) || currentSubject.topics[0];
-    const generated = await onGenerateAIChallenge(selectedSubjectId, topic?.name || 'General');
+    const targetTopicName = topic?.name || 'General';
+    const targetTopicId = selectedTopicId || topic?.id;
+
+    const generated = await onGenerateAIChallenge(selectedSubjectId, targetTopicName, targetTopicId);
     if (generated) {
       setSelectedOption(null);
       setIsAnswerSubmitted(false);
       setShowHintIndex(0);
       setActiveChallengeIndex(0);
+      setNoticeMsg(`¡Nuevo reto de "${targetTopicName.slice(0, 30)}..." listo para resolver!`);
+      setTimeout(() => setNoticeMsg(''), 4500);
     }
   };
 
@@ -98,6 +147,9 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   const subjectAttempts = attempts.filter(a => a.subjectId === selectedSubjectId);
   const correctCount = subjectAttempts.filter(a => a.isCorrect).length;
   const accuracyPercent = subjectAttempts.length > 0 ? Math.round((correctCount / subjectAttempts.length) * 100) : 0;
+
+  // Active topic object
+  const activeTopicObj = currentSubject.topics.find(t => t.id === selectedTopicId);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -111,7 +163,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
             </h2>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Preguntas tipo test oficiales para consolidar saberes básicos en {currentSubject.name}.
+            Preguntas tipo test oficiales LOMLOE para consolidar saberes básicos en {currentSubject.name}.
           </p>
         </div>
 
@@ -140,61 +192,129 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
         </div>
       </div>
 
+      {/* Notification toast if challenge generated */}
+      {noticeMsg && (
+        <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-lg text-xs font-medium animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{noticeMsg}</span>
+        </div>
+      )}
+
       {/* Filter by Topic and AI Generator Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <span>Bloques temáticos de {currentSubject.shortName}:</span>
+          </div>
+
           <button
-            onClick={() => { setSelectedTopicId(''); setActiveChallengeIndex(0); }}
-            className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${
-              !selectedTopicId
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-            }`}
+            onClick={handleGenerateNew}
+            disabled={isGeneratingAI}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white transition-colors shrink-0 shadow-xs cursor-pointer"
           >
-            Todos los bloques
+            <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAI ? 'animate-spin' : ''}`} />
+            <span>{isGeneratingAI ? 'Generando reto con IA...' : 'Crear reto con IA'}</span>
           </button>
-          {currentSubject.topics.slice(0, 4).map(topic => (
-            <button
-              key={topic.id}
-              onClick={() => { setSelectedTopicId(topic.id); setActiveChallengeIndex(0); }}
-              className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors truncate max-w-xs ${
-                selectedTopicId === topic.id
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                  : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              {topic.name}
-            </button>
-          ))}
         </div>
 
-        <button
-          onClick={handleGenerateNew}
-          disabled={isGeneratingAI}
-          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white transition-colors shrink-0 shadow-xs"
-        >
-          <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAI ? 'animate-spin' : ''}`} />
-          <span>{isGeneratingAI ? 'Generando reto...' : 'Crear reto con IA'}</span>
-        </button>
+        {/* Complete horizontal list of topics with counts */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+          <button
+            onClick={() => handleSelectTopic('')}
+            className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              !selectedTopicId
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            Todos los bloques ({challenges.filter(c => c.subjectId === selectedSubjectId).length})
+          </button>
+
+          {currentSubject.topics.map(topic => {
+            const countInTopic = challenges.filter(c => c.subjectId === selectedSubjectId && c.topicId === topic.id).length;
+            const isSelected = selectedTopicId === topic.id;
+
+            return (
+              <button
+                key={topic.id}
+                onClick={() => handleSelectTopic(topic.id)}
+                className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors truncate max-w-xs cursor-pointer ${
+                  isSelected
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                }`}
+                title={topic.name}
+              >
+                <span>{topic.name}</span>
+                <span className={`ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full ${
+                  isSelected
+                    ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                }`}>
+                  {countInTopic}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Challenge Card */}
       {activeChallenge ? (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
           {/* Card header */}
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 dark:text-slate-400 pb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-blue-600 dark:text-blue-400">
                 {currentSubject.name}
               </span>
               <span>·</span>
-              <span className="truncate">{activeChallenge.topicName}</span>
+              <span className="truncate max-w-xs">{activeChallenge.topicName}</span>
             </div>
-            <span className="font-mono">
-              Reto {activeChallengeIndex + 1} de {filteredChallenges.length}
-            </span>
+
+            <div className="flex items-center gap-2 font-mono">
+              <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                Reto {safeIndex + 1} de {filteredChallenges.length}
+              </span>
+              {selectedTopicId && (
+                <span className="text-[11px] text-slate-400">
+                  (en este bloque)
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Quick jump question selector if multiple questions exist */}
+          {filteredChallenges.length > 1 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="text-[11px] text-slate-400 mr-1">Preguntas:</span>
+              {filteredChallenges.map((ch, idx) => {
+                const isCurrent = idx === safeIndex;
+                const attempt = attempts.find(a => a.challengeId === ch.id);
+                let btnColor = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+                if (attempt) {
+                  btnColor = attempt.isCorrect 
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-400'
+                    : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-400';
+                }
+                if (isCurrent) {
+                  btnColor = 'ring-2 ring-blue-600 font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300';
+                }
+
+                return (
+                  <button
+                    key={ch.id}
+                    onClick={() => handleJumpToChallenge(idx)}
+                    className={`w-7 h-7 rounded-lg text-xs font-mono flex items-center justify-center transition-all cursor-pointer ${btnColor}`}
+                    title={`Ir al reto ${idx + 1}`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Question Text */}
           <div className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white leading-relaxed">
@@ -226,7 +346,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
                   key={index}
                   onClick={() => handleSelectOption(index)}
                   disabled={isAnswerSubmitted}
-                  className={`w-full text-left p-3.5 rounded-xl border text-sm transition-all flex items-start justify-between gap-3 ${optionClasses}`}
+                  className={`w-full text-left p-3.5 rounded-xl border text-sm transition-all flex items-start justify-between gap-3 cursor-pointer ${optionClasses}`}
                 >
                   <div className="flex items-start gap-3">
                     <span className="w-6 h-6 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs font-bold shrink-0">
@@ -257,9 +377,9 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
                 {showHintIndex < activeChallenge.hints.length - 1 && (
                   <button
                     onClick={() => setShowHintIndex(prev => prev + 1)}
-                    className="text-[11px] text-amber-700 dark:text-amber-300 hover:underline"
+                    className="text-[11px] text-amber-700 dark:text-amber-300 hover:underline cursor-pointer"
                   >
-                    Otra pista
+                    Otra pista ({showHintIndex + 1}/{activeChallenge.hints.length})
                   </button>
                 )}
               </div>
@@ -296,34 +416,70 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
           )}
 
           {/* Action buttons */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            {!isAnswerSubmitted ? (
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              {filteredChallenges.length > 1 && (
+                <button
+                  onClick={handlePrevChallenge}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Anterior</span>
+                </button>
+              )}
+
               <button
-                onClick={handleSubmitAnswer}
-                disabled={selectedOption === null}
-                className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-xs"
+                onClick={handleGenerateNew}
+                disabled={isGeneratingAI}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-xs font-medium transition-colors cursor-pointer"
+                title="Generar otra pregunta con IA"
               >
-                Comprobar respuesta
+                <Sparkles className={`w-3 h-3 ${isGeneratingAI ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Generar otro reto</span>
               </button>
-            ) : (
-              <button
-                onClick={handleNextChallenge}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold transition-colors shadow-xs"
-              >
-                <span>Siguiente reto</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+            </div>
+
+            <div>
+              {!isAnswerSubmitted ? (
+                <button
+                  onClick={handleSubmitAnswer}
+                  disabled={selectedOption === null}
+                  className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                >
+                  Comprobar respuesta
+                </button>
+              ) : (
+                <button
+                  onClick={handleNextChallenge}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                >
+                  <span>Siguiente reto</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-3">
-          <p className="text-sm text-slate-500">No hay retos preconfigurados para este filtro.</p>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-slate-800 dark:text-white">
+              {activeTopicObj ? activeTopicObj.name : 'Bloque seleccionado'}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Aún no hay retos en este bloque temático o has completado todos los disponibles. Haz clic abajo para crear uno con IA adaptado al currículo.
+            </p>
+          </div>
           <button
             onClick={handleGenerateNew}
-            className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg"
+            disabled={isGeneratingAI}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
           >
-            Generar reto con IA ahora
+            <Sparkles className={`w-4 h-4 ${isGeneratingAI ? 'animate-spin' : ''}`} />
+            <span>{isGeneratingAI ? 'Generando reto...' : 'Generar reto con IA ahora'}</span>
           </button>
         </div>
       )}

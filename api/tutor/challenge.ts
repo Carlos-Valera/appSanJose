@@ -28,22 +28,9 @@ export default async function handler(req: any, res: any) {
   const subjectTitle = SUBJECT_NAMES[subjectId] || subjectId || '2º ESO';
 
   if (!apiKey) {
-    // Return structured default question for 2º ESO LOMLOE
-    return res.status(200).json({
-      question: `Respecto a los saberes básicos de 2º ESO en ${subjectTitle} sobre "${topicName}", ¿cuál de las siguientes opciones describe el método de trabajo adecuado?`,
-      options: [
-        'Identificar los datos clave, relacionarlos con el concepto formal y verificar la coherencia del resultado.',
-        'Memorizar enunciados de memoria sin analizar el significado de las operaciones ni los conceptos.',
-        'Descartar las unidades y la justificación de los pasos intermedios.',
-        'Limitarse a buscar resultados aleatorios sin seguir las pautas explicadas en clase.'
-      ],
-      correctIndex: 0,
-      explanation: `En 2º de ESO (Castilla-La Mancha), el aprendizaje competencial de ${subjectTitle} se basa en el razonamiento guiado y la comprobación de soluciones en ${topicName}.`,
-      hints: [
-        'Piensa en cómo te enseña tu profesor a plantear un ejercicio paso a paso.',
-        'Descarta las opciones que contradicen el método de estudio riguroso.',
-        'La opción A describe el método de resolución sistemático.'
-      ]
+    return res.status(503).json({
+      error: 'GEMINI_API_KEY no configurada en el entorno del servidor',
+      message: 'Usa el motor curricular dinámico del cliente o configura la variable GEMINI_API_KEY en Vercel'
     });
   }
 

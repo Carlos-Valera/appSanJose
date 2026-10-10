@@ -532,8 +532,244 @@ const TEMPLATE_GENERATORS: CurricularQuestionTemplate[] = [
         hints: selected.hints
       };
     }
+  },
+  {
+    subjectId: 'ingles',
+    topicId: 'ing-2',
+    topicName: 'Past Simple and Past Continuous',
+    generator: () => {
+      const items = [
+        {
+          q: 'Choose the correct verb form: "While I _______ my homework, my brother _______ into the room."',
+          opts: ['was doing / came', 'did / was coming', 'was doing / was coming', 'did / came'],
+          c: 0,
+          exp: 'We use the Past Continuous ("was doing") for the longer background action and the Past Simple ("came") for the short interruption.',
+          hints: ['"While" introduces a progressive action in progress (was doing).', 'The sudden action interrupting it uses Past Simple.', 'Past Continuous = was/were + verb-ing; Past Simple = irregular 2nd form (came).']
+        },
+        {
+          q: 'What is the past simple and past participle form of the irregular verb "buy"?',
+          opts: ['bought / bought', 'buyed / buyed', 'brought / brought', 'boughten / boughten'],
+          c: 0,
+          exp: 'Buy is an irregular verb: buy -> bought -> bought. (Do not confuse with bring -> brought).',
+          hints: ['It is an irregular verb ending in -ought.', 'Bring -> brought, but Buy -> bought.', 'Spelling: b-o-u-g-h-t.']
+        },
+        {
+          q: 'How do you form a negative sentence in Past Simple? "She _______ to the cinema yesterday."',
+          opts: ['didn\'t go', 'didn\'t went', 'not went', 'wasn\'t go'],
+          c: 0,
+          exp: 'In Past Simple negative sentences, we use the auxiliary "didn\'t" + bare infinitive ("didn\'t go"), never "didn\'t went".',
+          hints: ['After the auxiliary "didn\'t", the main verb stays in the infinitive (base form).', 'Never put two past markers together (no "didn\'t went").', 'Correct formula: didn\'t + go.']
+        }
+      ];
+      const selected = items[Math.floor(Math.random() * items.length)];
+      return {
+        question: selected.q,
+        options: selected.opts,
+        correctIndex: selected.c,
+        explanation: selected.exp,
+        hints: selected.hints
+      };
+    }
+  },
+  {
+    subjectId: 'ingles',
+    topicId: 'ing-3',
+    topicName: 'Future Forms: Will, Be Going To and Present Continuous',
+    generator: () => {
+      const items = [
+        {
+          q: 'Look at those dark clouds in the sky! It _______ rain.',
+          opts: ['is going to', 'will', 'is raining', 'shall'],
+          c: 0,
+          exp: 'We use "be going to" for predictions based on present evidence (the dark clouds in the sky).',
+          hints: ['There is clear physical evidence right now (dark clouds).', 'Predictions with evidence use "be going to".', 'Formula: is + going to + verb.']
+        },
+        {
+          q: 'Don\'t worry about carrying that heavy bag, I _______ you!',
+          opts: ['will help', 'am going to help', 'am helping', 'helped'],
+          c: 0,
+          exp: 'We use "will" for spontaneous decisions and offers made at the moment of speaking.',
+          hints: ['It is an instant offer made right now.', 'Spontaneous offers use "will".', 'I will help you.']
+        }
+      ];
+      const selected = items[Math.floor(Math.random() * items.length)];
+      return {
+        question: selected.q,
+        options: selected.opts,
+        correctIndex: selected.c,
+        explanation: selected.exp,
+        hints: selected.hints
+      };
+    }
+  },
+  {
+    subjectId: 'ingles',
+    topicId: 'ing-5',
+    topicName: 'Modal Verbs: Obligation, Prohibition and Advice',
+    generator: () => {
+      const items = [
+        {
+          q: 'You _______ shout in the library. It is strictly forbidden!',
+          opts: ['mustn\'t', 'should', 'don\'t have to', 'can'],
+          c: 0,
+          exp: '"Mustn\'t" expresses strict prohibition (it is against the rules). "Don\'t have to" only means lack of necessity.',
+          hints: ['Forbidden means you are not allowed to do it.', 'For prohibition we use "mustn\'t".', 'Don\'t have to means optional, not forbidden.']
+        },
+        {
+          q: 'If you have a high fever and a headache, you _______ see a doctor.',
+          opts: ['should', 'mustn\'t', 'couldn\'t', 'shall not'],
+          c: 0,
+          exp: 'We use "should" to give advice or a friendly recommendation.',
+          hints: ['This is advice or recommendation for someone sick.', 'Advice uses "should" (deberías).', 'Formula: should + base form.']
+        }
+      ];
+      const selected = items[Math.floor(Math.random() * items.length)];
+      return {
+        question: selected.q,
+        options: selected.opts,
+        correctIndex: selected.c,
+        explanation: selected.exp,
+        hints: selected.hints
+      };
+    }
+  },
+  {
+    subjectId: 'fisica-quimica',
+    topicId: 'fq-2',
+    topicName: 'La Materia y la Teoría Cinético-Molecular',
+    generator: () => {
+      const items = [
+        {
+          q: 'Según la teoría cinético-molecular, ¿cómo se encuentran las partículas en el estado gaseoso?',
+          opts: ['Muy separadas entre sí, moviéndose caóticamente a gran velocidad con grandes espacios vacíos', 'Unidas fuertemente en posiciones fijas vibrando levemente', 'En contacto continuo pero resbalando unas sobre otras', 'Formando una red cristalina inmóvil'],
+          c: 0,
+          exp: 'En los gases, las fuerzas de cohesión son despreciables: las partículas están muy alejadas, se mueven en todas direcciones a gran velocidad y chocan elásticamente contra las paredes del recipiente.',
+          hints: ['Los gases ocupan todo el volumen disponible y se pueden comprimir fácilmente.', 'Las partículas están muy separadas y tienen gran energía cinética.', 'No tienen forma ni volumen fijo.']
+        },
+        {
+          q: '¿Cómo se denomina el cambio de estado directo de gas a sólido sin pasar por el estado líquido?',
+          opts: ['Sublimación regresiva o inversa', 'Condensación', 'Vaporización', 'Solidificación'],
+          c: 0,
+          exp: 'El paso directo de gas a sólido se llama sublimación inversa o regresiva (o deposición). El paso de gas a líquido es condensación.',
+          hints: ['De sólido a gas directo es sublimación (como el hielo seco).', 'El proceso contrario se llama sublimación inversa.', 'No pasa por líquido.']
+        }
+      ];
+      const selected = items[Math.floor(Math.random() * items.length)];
+      return {
+        question: selected.q,
+        options: selected.opts,
+        correctIndex: selected.c,
+        explanation: selected.exp,
+        hints: selected.hints
+      };
+    }
+  },
+  {
+    subjectId: 'fisica-quimica',
+    topicId: 'fq-3',
+    topicName: 'Sustancias Puras, Mezclas y Técnicas de Separación',
+    generator: () => {
+      const items = [
+        {
+          q: 'En el laboratorio de ciencias del IES San José, ¿qué método utilizarías para separar una mezcla de agua y alcohol basándote en sus distintos puntos de ebullición?',
+          opts: ['Destilación simple', 'Filtración por gravedad', 'Decantación con embudo', 'Cristalización en placa'],
+          c: 0,
+          exp: 'La destilación separa líquidos miscibles homogéneos aprovechando que hierven a diferentes temperaturas (el alcohol a ~78 °C y el agua a 100 °C).',
+          hints: ['El agua y el alcohol forman una mezcla homogénea (se mezclan completamente).', 'Uno hierve antes que el otro.', 'El vapor del componente más volátil se condensa en un refrigerante.']
+        },
+        {
+          q: '¿Cuál de los siguientes sistemas materiales es una mezcla heterogénea?',
+          opts: ['Agua con aceite', 'Agua con sal completamente disuelta', 'El aire limpio de la Serranía de Cuenca', 'Una moneda de bronce'],
+          c: 0,
+          exp: 'El agua y el aceite son líquidos inmiscibles que forman dos fases claramente diferenciadas a simple vista (mezcla heterogénea).',
+          hints: ['En una mezcla heterogénea se distinguen las diferentes fases o componentes.', 'El aceite flota sobre el agua debido a su menor densidad.', 'El agua con sal disuelta es una disolución homogénea.']
+        }
+      ];
+      const selected = items[Math.floor(Math.random() * items.length)];
+      return {
+        question: selected.q,
+        options: selected.opts,
+        correctIndex: selected.c,
+        explanation: selected.exp,
+        hints: selected.hints
+      };
+    }
+  },
+  {
+    subjectId: 'lengua',
+    topicId: 'len-1',
+    topicName: 'Comunicación y Tipologías Textuales',
+    generator: () => {
+      const items = [
+        {
+          q: '¿Qué tipo de texto tiene como propósito principal defender una tesis o postura mediante razones y argumentos para convencer al receptor?',
+          opts: ['Texto argumentativo', 'Texto expositivo', 'Texto narrativo', 'Texto prescriptivo'],
+          c: 0,
+          exp: 'El texto argumentativo defiende una opinión o tesis con argumentos lógicos para persuadir al lector (ejemplos: un artículo de opinión, un ensayo, un debate).',
+          hints: ['Su fin es persuadir y convencer mediante razones.', 'Incluye tesis y argumentos a favor o en contra.', 'Los artículos de opinión y debates son ejemplos claros.']
+        },
+        {
+          q: 'En un texto narrativo, ¿cómo se llama el narrador que participa como protagonista o testigo de los hechos utilizando la primera persona (yo)?',
+          opts: ['Narrador interno (en 1ª persona)', 'Narrador omnisciente', 'Narrador objetivo (cámara)', 'Narrador en 3ª persona ausente'],
+          c: 0,
+          exp: 'El narrador interno cuenta la historia desde dentro como protagonista o testigo y usa la 1ª persona gramatical.',
+          hints: ['Habla en primera persona ("yo fui", "nosotros vimos").', 'Forma parte del relato.', 'No sabe los pensamientos secretos de todos como el omnisciente.']
+        }
+      ];
+      const selected = items[Math.floor(Math.random() * items.length)];
+      return {
+        question: selected.q,
+        options: selected.opts,
+        correctIndex: selected.c,
+        explanation: selected.exp,
+        hints: selected.hints
+      };
+    }
+  },
+  {
+    subjectId: 'matematicas',
+    topicId: 'mat-4',
+    topicName: 'Proporcionalidad y Porcentajes',
+    generator: () => {
+      const percent = [10, 15, 20, 25][Math.floor(Math.random() * 4)];
+      const price = [40, 60, 80, 100, 120][Math.floor(Math.random() * 5)];
+      const discount = (price * percent) / 100;
+      const finalPrice = price - discount;
+
+      const opts = [
+        `${finalPrice} €`,
+        `${finalPrice + 5} €`,
+        `${discount} €`,
+        `${price - 5} €`
+      ];
+
+      return {
+        question: `Un abrigo cuesta ${price} € en una tienda de Cuenca. Si tiene una rebaja del ${percent} %, ¿cuál es su precio final con el descuento aplicado?`,
+        options: opts,
+        correctIndex: 0,
+        explanation: `Calculamos el descuento: ${percent} % de ${price} = (${percent} · ${price}) / 100 = ${discount} €. Restamos el descuento al precio original: ${price} - ${discount} = ${finalPrice} €.`,
+        hints: [
+          `Calcula cuánto te descuentan: multiplica ${price} por ${percent} y divide entre 100.`,
+          `El descuento es de ${discount} €.`,
+          `Resta ese descuento (${discount} €) a los ${price} € iniciales.`
+        ]
+      };
+    }
   }
 ];
+
+function shuffleOptions(options: string[], correctIndex: number): { options: string[]; correctIndex: number } {
+  const correctText = options[correctIndex];
+  const shuffled = [...options];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return {
+    options: shuffled,
+    correctIndex: shuffled.indexOf(correctText)
+  };
+}
 
 export async function requestAIChallenge(
   subjectId: SubjectId,
@@ -541,10 +777,77 @@ export async function requestAIChallenge(
   topicId?: string,
   difficulty: string = 'medio'
 ): Promise<Challenge> {
-  // 1. First, attempt to call the server endpoint (/api/tutor/challenge)
+  const subject = SUBJECTS.find(s => s.id === subjectId);
+  const subjectTitle = subject?.name || subjectId;
+
+  // 1. Direct client-side Gemini call if custom API key or env key is available
+  const clientKey = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY) ||
+    (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) ||
+    storage.getCustomApiKey();
+
+  if (clientKey) {
+    try {
+      const { GoogleGenAI, Type } = await import('@google/genai');
+      const ai = new GoogleGenAI({
+        apiKey: clientKey,
+        httpOptions: { headers: { 'User-Agent': 'tutorsanjose-client' } }
+      });
+
+      const res = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: `Genera 1 reto interactivo tipo test de 4 opciones para un estudiante de 2º de ESO (13-14 años) sobre "${topicName}" en la asignatura "${subjectTitle}". Decreto 82/2022 LOMLOE Castilla-La Mancha. La pregunta debe ser rigurosa, clara y formativa.`,
+        config: {
+          systemInstruction: `Eres un profesor de secundaria creador de retos de 2º ESO del IES San José de Cuenca (Castilla-La Mancha).
+Devuelve un JSON con:
+- question (string con el enunciado de la pregunta)
+- options (array de 4 strings de opciones posibles)
+- correctIndex (entero de 0 a 3 con la opción correcta)
+- explanation (explicación detallada de por qué es la respuesta correcta)
+- hints (array de 3 pistas socráticas graduales)`,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              question: { type: Type.STRING },
+              options: { type: Type.ARRAY, items: { type: Type.STRING } },
+              correctIndex: { type: Type.INTEGER },
+              explanation: { type: Type.STRING },
+              hints: { type: Type.ARRAY, items: { type: Type.STRING } }
+            },
+            required: ['question', 'options', 'correctIndex', 'explanation', 'hints']
+          }
+        }
+      });
+
+      const parsed = JSON.parse(res.text || '{}');
+      if (parsed.question && Array.isArray(parsed.options) && parsed.options.length === 4) {
+        const { options: shuffledOpts, correctIndex: newCorrect } = shuffleOptions(
+          parsed.options, 
+          typeof parsed.correctIndex === 'number' ? parsed.correctIndex : 0
+        );
+
+        return {
+          id: 'ch-ai-' + Date.now(),
+          subjectId,
+          topicId: topicId || undefined,
+          topicName: topicName || '2º ESO',
+          question: parsed.question,
+          options: shuffledOpts,
+          correctIndex: newCorrect,
+          explanation: parsed.explanation || 'Explicación del reto.',
+          hints: Array.isArray(parsed.hints) ? parsed.hints : ['Piensa en el concepto clave.'],
+          difficulty: 'medio'
+        };
+      }
+    } catch (e) {
+      console.info('Client Gemini generation fallback:', e);
+    }
+  }
+
+  // 2. Attempt to call server endpoint (/api/tutor/challenge)
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
 
     const response = await fetch('/api/tutor/challenge', {
       method: 'POST',
@@ -561,33 +864,44 @@ export async function requestAIChallenge(
 
     if (response.ok) {
       const data = await response.json();
-      if (data && data.question && Array.isArray(data.options)) {
-        return {
-          id: 'ch-ai-' + Date.now(),
-          subjectId,
-          topicId: topicId || undefined,
-          topicName: topicName || data.topicName || '2º ESO',
-          question: data.question,
-          options: data.options,
-          correctIndex: typeof data.correctIndex === 'number' ? data.correctIndex : 0,
-          explanation: data.explanation || 'Explicación del reto.',
-          hints: Array.isArray(data.hints) ? data.hints : ['Piensa en el concepto clave.'],
-          difficulty: 'medio'
-        };
+      if (data && data.question && Array.isArray(data.options) && !data.error) {
+        // Discard generic dummy boilerplate if returned by any legacy server
+        if (!data.question.includes('¿cuál de las siguientes opciones describe el método de trabajo adecuado?') &&
+            !data.question.includes('¿cuál de las siguientes afirmaciones es correcta según el currículo LOMLOE')) {
+          const { options: shuffledOpts, correctIndex: newCorrect } = shuffleOptions(
+            data.options, 
+            typeof data.correctIndex === 'number' ? data.correctIndex : 0
+          );
+          return {
+            id: 'ch-ai-' + Date.now(),
+            subjectId,
+            topicId: topicId || undefined,
+            topicName: topicName || data.topicName || '2º ESO',
+            question: data.question,
+            options: shuffledOpts,
+            correctIndex: newCorrect,
+            explanation: data.explanation || 'Explicación del reto.',
+            hints: Array.isArray(data.hints) ? data.hints : ['Piensa en el concepto clave.'],
+            difficulty: 'medio'
+          };
+        }
       }
     }
   } catch (err) {
-    // Expected on static hosting or offline
-    console.info('Server API unreachable, generating curricular challenge locally:', err);
+    console.info('Server API unreachable, using curricular dynamic generator:', err);
   }
 
-  // 2. Intelligent dynamic curricular fallback generator
-  // Match template for subject and topicId or generate dynamic question
-  const matchingTemplates = TEMPLATE_GENERATORS.filter(t => {
+  // 3. Intelligent dynamic curricular fallback generator
+  // Match template strictly for subject and topicId
+  let matchingTemplates = TEMPLATE_GENERATORS.filter(t => {
     if (t.subjectId !== subjectId) return false;
-    if (topicId && t.topicId === topicId) return true;
+    if (topicId) return t.topicId === topicId;
     return true;
   });
+
+  if (matchingTemplates.length === 0) {
+    matchingTemplates = TEMPLATE_GENERATORS.filter(t => t.subjectId === subjectId);
+  }
 
   const template = matchingTemplates.length > 0
     ? matchingTemplates[Math.floor(Math.random() * matchingTemplates.length)]
@@ -595,43 +909,46 @@ export async function requestAIChallenge(
 
   if (template) {
     const gen = template.generator();
+    const { options: shuffledOpts, correctIndex: newCorrect } = shuffleOptions(gen.options, gen.correctIndex);
     return {
       id: 'ch-gen-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
       subjectId,
       topicId: topicId || template.topicId,
       topicName: topicName || template.topicName,
       question: gen.question,
-      options: gen.options,
-      correctIndex: gen.correctIndex,
+      options: shuffledOpts,
+      correctIndex: newCorrect,
       explanation: gen.explanation,
       hints: gen.hints,
       difficulty: 'medio'
     };
   }
 
-  // Generic LOMLOE fallback for subjects without direct template
-  const subject = SUBJECTS.find(s => s.id === subjectId);
+  // 4. Default curricular fallback with varied questions
   const activeTopic = subject?.topics.find(t => t.id === topicId) || subject?.topics[0];
-  const concept = activeTopic?.keyConcepts[0] || 'Concepto clave 2º ESO';
+  const concept = activeTopic?.keyConcepts[Math.floor(Math.random() * (activeTopic?.keyConcepts.length || 1))] || 'Concepto clave 2º ESO';
+
+  const rawOpts = [
+    `Comprender el concepto de "${concept}" y aplicar su procedimiento razonado paso a paso.`,
+    `Aprender únicamente de memoria las palabras sin entender su significado real.`,
+    `Ignorar las unidades de medida y la coherencia del resultado final.`,
+    `Resolver mediante ensayo y error sin justificar ningún cálculo o argumento.`
+  ];
+  const { options: finalOpts, correctIndex: finalCorrect } = shuffleOptions(rawOpts, 0);
 
   return {
-    id: 'ch-gen-' + Date.now(),
+    id: 'ch-gen-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     subjectId,
     topicId: activeTopic?.id,
     topicName: activeTopic?.name || topicName,
-    question: `[2º ESO ${subject?.name || ''}] Respecto al bloque "${activeTopic?.name || topicName}", ¿cuál de las siguientes afirmaciones sobre "${concept}" es correcta según el currículo LOMLOE?`,
-    options: [
-      `Es un principio fundamental aplicable a problemas del temario oficial de 2º ESO.`,
-      `Solo se aplica en situaciones teóricas y no tiene validez práctica en el curso.`,
-      `Contradice los saberes básicos establecidos por el departamento didáctico.`,
-      `Es un concepto optativo que no forma parte de las competencias clave evaluables.`
-    ],
-    correctIndex: 0,
-    explanation: `En 2º de ESO, comprender "${concept}" permite asentar las competencias específicas y saberes básicos de ${subject?.name}.`,
+    question: `En 2º de ESO (${subject?.name || ''}), respecto a "${concept}" en el bloque "${activeTopic?.name || topicName}", ¿cuál es la pauta correcta según el método de trabajo en clase?`,
+    options: finalOpts,
+    correctIndex: finalCorrect,
+    explanation: `En ${subject?.name}, el aprendizaje competencial de 2º de ESO requiere comprender el concepto de "${concept}" para aplicarlo de forma fundamentada en problemas y textos.`,
     hints: [
-      `Revisa los apuntes y saberes básicos del tema: ${activeTopic?.name}.`,
-      `Descarta las opciones que niegan la utilidad práctica de la materia.`,
-      `La opción correcta destaca la fundamentación curricular del concepto.`
+      `Piensa en cómo se aborda "${concept}" en las clases del IES San José.`,
+      `Descarta las opciones que rechazan el rigor y el análisis razonado.`,
+      `El método correcto exige comprender el concepto antes de aplicar la regla o fórmula.`
     ],
     difficulty: 'medio'
   };

@@ -31,47 +31,63 @@ app.post("/api/tutor/chat", async (req, res) => {
   try {
     const { subjectId, message, conversationHistory = [], topicName } = req.body;
     const subjectTitle = SUBJECT_NAMES[subjectId] || subjectId;
-    const systemInstruction = `Eres el TUTOR PERSONAL SOCR\xC1TICO de la asignatura "${subjectTitle}" para un alumno de 2\xBA de Educaci\xF3n Secundaria Obligatoria (ESO) del instituto p\xFAblico IES San Jos\xE9 en Cuenca, Castilla-La Mancha (Espa\xF1a).
+    let subjectRule = "";
+    let fallbackData = {
+      explanation: `\xA1Hola! Como tutor socr\xE1tico de ${subjectTitle} en el IES San Jos\xE9 de Cuenca, estoy aqu\xED para guiarte paso a paso. Analicemos juntos tu duda: \xBFcu\xE1l es el concepto esencial que identificas en este ejercicio?`,
+      keyConcept: topicName || "Razonamiento Curricular 2\xBA ESO",
+      hints: [
+        "Vuelve a leer el enunciado con calma e identifica qu\xE9 te est\xE1n pidiendo exactamente.",
+        "Recuerda las reglas y conceptos trabajados esta semana en clase.",
+        "Plantea tu primera hip\xF3tesis o intento y lo revisamos juntos."
+      ],
+      reflectionQuestion: "\xBFCu\xE1l crees que ser\xEDa el primer paso l\xF3gico para empezar a abordarlo?"
+    };
+    if (subjectId === "ingles") {
+      subjectRule = 'Eres Ms. Davies, profesora y tutora socr\xE1tica de Ingl\xE9s para 2\xBA ESO. NUNCA menciones "calcular", "f\xF3rmulas", "inc\xF3gnitas" ni operaciones matem\xE1ticas. Es una clase de LENGUA EXTRANJERA: INGL\xC9S. Orienta sobre tiempos verbales (Past Simple, Present Continuous, Irregulars), vocabulario, comparativos, preposiciones y pronunciaci\xF3n.';
+      fallbackData = {
+        explanation: "Hello! I'm Ms. Davies, your English tutor for 2\xBA ESO. Let's work through this step by step: what verb structure, tense, or vocabulary word are you practicing in this exercise?",
+        keyConcept: "Gram\xE1tica y Vocabulario de Ingl\xE9s (2\xBA ESO)",
+        hints: [
+          "Hint 1: Identify the main subject and the verb of the sentence.",
+          "Hint 2: Look for time adverbs (yesterday, now, always, every day) to choose the right tense.",
+          "Hint 3: In English sentences, remember word order: Subject + Verb + Complements (S-V-O)."
+        ],
+        reflectionQuestion: "Who is the subject of your sentence, and what action is taking place?"
+      };
+    } else if (subjectId === "lengua") {
+      subjectRule = "Eres D. Santiago, tutor de Lengua Castellana y Literatura para 2\xBA ESO. Orienta sobre sintaxis (Sujeto, CD, CI, CC), morfolog\xEDa, ortograf\xEDa y literatura sin usar t\xE9rminos de c\xE1lculo.";
+    } else if (subjectId === "geografia-historia") {
+      subjectRule = "Eres D\xF1a. Carmen, tutora de Geograf\xEDa e Historia para 2\xBA ESO. Orienta sobre historia medieval (Al-\xC1ndalus, Reconquista, Alfonso VIII, Cuenca, feudalismo, rom\xE1nico/g\xF3tico) y geograf\xEDa urbana.";
+    } else if (subjectId === "fisica-quimica") {
+      subjectRule = "Eres D. Roberto, tutor de F\xEDsica y Qu\xEDmica de 2\xBA ESO. Orienta sobre el m\xE9todo cient\xEDfico, Sistema Internacional, densidad, estados de la materia y \xE1tomos.";
+    } else {
+      subjectRule = "Eres D\xF1a. Elena, tutora de Matem\xE1ticas de 2\xBA ESO. Orienta sobre n\xFAmeros enteros, \xE1lgebra, fracciones y geometr\xEDa.";
+    }
+    const systemInstruction = `Eres el TUTOR PERSONAL SOCR\xC1TICO de "${subjectTitle}" para un estudiante de 2\xBA ESO del IES San Jos\xE9 en Cuenca (Castilla-La Mancha).
+Curr\xEDculo: LOMLOE Decreto 82/2022 de Castilla-La Mancha para alumnos de 13-14 a\xF1os.
+${subjectRule}
 
-MARCO CURRICULAR Y LEGAL:
-- Te riges por el curr\xEDculo oficial LOMLOE de Castilla-La Mancha (Decreto 82/2022 de 12 de julio).
-- Nivel de comprensi\xF3n: Alumno de 13 a 14 a\xF1os.
-- Contexto: IES San Jos\xE9 de Cuenca (s\xE9 cercano a la realidad escolar de Cuenca cuando surjan ejemplos).
-
-REGLA DE ORO INQUEBRANTABLE (M\xC9TODO SOCR\xC1TICO):
-1. TIENES TOTALMENTE PROHIBIDO resolverle los deberes directamente al alumno o darle el resultado num\xE9rico/sint\xE1ctico final.
-2. NUNCA redactes trabajos, comentarios de texto ni respuestas de examen por \xE9l.
-3. Tu objetivo pedag\xF3gico es guiar su pensamiento mediante preguntas orientadoras, pistas graduales y desglose de pasos.
-4. Si el alumno te copia un ejercicio, preg\xFAntale qu\xE9 datos reconoce, qu\xE9 f\xF3rmula o concepto cree que debe aplicar, o ind\xEDcale el primer paso sin resolverlo.
-5. Felicita sus aciertos intermedios con entusiasmo educativo y corrige con delicadeza los errores conceptuales.
-
-FORMATO DE TU RESPUESTA:
-Debes responder en formato JSON estrictamente v\xE1lido con los siguientes campos:
+REGLA DE ORO (M\xC9TODO SOCR\xC1TICO):
+1. PROHIBIDO resolverle los deberes directamente al alumno o darle la respuesta final.
+2. Tu objetivo pedag\xF3gico es guiar su pensamiento mediante preguntas orientadoras y pistas graduales.
+3. Adapta el vocabulario a 2\xBA de la ESO.
+4. Responde SIEMPRE en formato JSON con la siguiente estructura:
 {
-  "explanation": "Tu mensaje pedag\xF3gico socr\xE1tico en espa\xF1ol para el alumno, claro, motivador y explicando el concepto clave sin resolver el ejercicio.",
-  "keyConcept": "Nombre breve del concepto curricular clave (ej: 'Teorema de Pit\xE1goras', 'Complemento Directo', 'Factores de conversi\xF3n', 'Past Continuous')",
-  "hints": [
-    "Pista 1: Qu\xE9 concepto o f\xF3rmula inicial debes recordar",
-    "Pista 2: C\xF3mo dar el primer paso o plantear el c\xE1lculo",
-    "Pista 3: C\xF3mo verificar si vas por buen camino"
-  ],
-  "reflectionQuestion": "Una pregunta directa y reflexiva para que el alumno te responda con su propio razonamiento."
+  "explanation": "Tu orientaci\xF3n pedag\xF3gica socr\xE1tica clara, motivadora y sin dar la soluci\xF3n directa.",
+  "keyConcept": "Nombre breve del concepto curricular clave",
+  "hints": ["Pista 1 \xFAtil", "Pista 2 progresiva", "Pista 3 para verificar"],
+  "reflectionQuestion": "Pregunta reflexiva directa para que el alumno razone y responda."
 }`;
     if (!apiKey) {
-      res.json({
-        explanation: `\xA1Hola! Como tutor socr\xE1tico de ${subjectTitle} en el IES San Jos\xE9, quiero ayudarte a entenderlo paso a paso por ti mismo. Analicemos juntos tu duda: \xBFcu\xE1les son los datos o palabras clave que identificas en este ejercicio?`,
-        keyConcept: topicName || "Razonamiento Curricular 2\xBA ESO",
-        hints: [
-          "Identifica qu\xE9 te est\xE1 pidiendo exactamente el enunciado.",
-          "Recuerda las reglas y conceptos que hab\xE9is visto esta semana en clase.",
-          "Plantea tu primera hip\xF3tesis o c\xE1lculo y comp\xE1rtela conmigo para revisarla juntos."
-        ],
-        reflectionQuestion: "\xBFCu\xE1l crees que ser\xEDa el primer paso para empezar a resolverlo?"
-      });
+      res.json(fallbackData);
       return;
     }
-    const promptText = `Tema actual: ${topicName || "General 2\xBA ESO"}
-Pregunta/Duda del alumno: ${message}`;
+    const recentHistory = Array.isArray(conversationHistory) ? conversationHistory.slice(-4).map((h) => `${h.role === "user" ? "Alumno" : "Tutor"}: ${h.content}`).join("\n") : "";
+    const promptText = `Tema del bloque: ${topicName || "Temario 2\xBA ESO"}
+Historial reciente:
+${recentHistory}
+
+Nueva consulta del alumno: ${message}`;
     const response = await ai.models.generateContent({
       model: "gemini-3.8-flash",
       contents: promptText,
@@ -98,16 +114,7 @@ Pregunta/Duda del alumno: ${message}`;
     try {
       parsedData = JSON.parse(responseText);
     } catch {
-      parsedData = {
-        explanation: responseText,
-        keyConcept: topicName || "Concepto 2\xBA ESO",
-        hints: [
-          "Revisa qu\xE9 datos tienes y qu\xE9 f\xF3rmula se aplica.",
-          "Haz un primer intento por pasos.",
-          "Comprueba que las unidades y signos sean coherentes."
-        ],
-        reflectionQuestion: "\xBFQu\xE9 parte te parece la m\xE1s retadora?"
-      };
+      parsedData = fallbackData;
     }
     res.json(parsedData);
   } catch (error) {
@@ -123,21 +130,9 @@ app.post("/api/tutor/challenge", async (req, res) => {
     const { subjectId, topicName = "General", difficulty = "medio" } = req.body;
     const subjectTitle = SUBJECT_NAMES[subjectId] || subjectId;
     if (!apiKey) {
-      res.json({
-        question: `[2\xBA ESO ${subjectTitle}] \xBFCu\xE1l de las siguientes afirmaciones sobre "${topicName}" es correcta seg\xFAn el temario de Castilla-La Mancha?`,
-        options: [
-          "Opci\xF3n A: La regla b\xE1sica se cumple en todos los casos estudiados.",
-          "Opci\xF3n B: Es un concepto exclusivo de cursos superiores.",
-          "Opci\xF3n C: Solo se aplica a problemas te\xF3ricos sin aplicaci\xF3n pr\xE1ctica.",
-          "Opci\xF3n D: Requiere memorizaci\xF3n sin necesidad de comprensi\xF3n."
-        ],
-        correctIndex: 0,
-        explanation: `En 2\xBA de ESO para ${subjectTitle}, comprender los fundamentos de ${topicName} permite resolver problemas de la vida cotidiana y avanzar con solidez.`,
-        hints: [
-          "Piensa en la definici\xF3n explicada en tu libro de texto.",
-          "Descarta las opciones que contradicen el m\xE9todo razonado.",
-          "F\xEDjate en las palabras clave del enunciado."
-        ]
+      res.status(503).json({
+        error: "GEMINI_API_KEY no configurada en el servidor",
+        message: "Usa el motor de retos din\xE1micos del cliente"
       });
       return;
     }

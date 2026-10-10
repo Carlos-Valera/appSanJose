@@ -157,21 +157,9 @@ app.post('/api/tutor/challenge', async (req: Request, res: Response): Promise<vo
     const subjectTitle = SUBJECT_NAMES[subjectId] || subjectId;
 
     if (!apiKey) {
-      res.json({
-        question: `[2º ESO ${subjectTitle}] Respecto a los saberes básicos de "${topicName}", ¿cuál de las siguientes afirmaciones es correcta según el currículo LOMLOE de Castilla-La Mancha?`,
-        options: [
-          'El análisis razonado de los datos y la aplicación justificada de la regla/fórmula conducen a la solución correcta.',
-          'Es un concepto puramente memorístico sin ninguna utilidad práctica en la vida cotidiana.',
-          'Contradice los principios metodológicos y los criterios de evaluación del curso.',
-          'Solo se debe resolver mediante tanteo aleatorio sin ningún paso intermedio.'
-        ],
-        correctIndex: 0,
-        explanation: `En 2º de ESO para ${subjectTitle}, comprender los fundamentos de ${topicName} permite resolver problemas competenciales con rigor y criterio propio.`,
-        hints: [
-          'Piensa en la definición explicada en tu libro de texto y apuntes de clase.',
-          'Descarta las opciones que contradicen el método de razonamiento científico y humanístico.',
-          'Fíjate en las palabras clave del enunciado y en el procedimiento paso a paso.'
-        ]
+      res.status(503).json({
+        error: 'GEMINI_API_KEY no configurada en el servidor',
+        message: 'Usa el motor de retos dinámicos del cliente'
       });
       return;
     }

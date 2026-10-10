@@ -341,6 +341,8 @@ export default function App() {
             subjects={SUBJECTS}
             selectedSubjectId={selectedSubjectId}
             onSelectSubject={setSelectedSubjectId}
+            selectedTopicId={selectedTopicId}
+            onSelectTopic={setSelectedTopicId}
             challenges={challenges}
             attempts={attempts}
             onSaveAttempt={handleSaveAttempt}

@@ -115,7 +115,10 @@ export default async function handler(req: any, res: any) {
   const config = SUBJECT_DETAILS[subjectId] || SUBJECT_DETAILS['matematicas'];
 
   if (!apiKey) {
-    return res.status(200).json(config.fallback);
+    return res.status(503).json({
+      error: 'GEMINI_API_KEY no configurada en Vercel',
+      message: 'Activando motor socrático inteligente del cliente'
+    });
   }
 
   try {

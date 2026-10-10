@@ -25,6 +25,19 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const [currentTerm, setCurrentTerm] = useState(profile.currentTerm);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(() => storage.getCustomApiKey());
+
+  // Actualizar valores al abrir si el profile cambia
+  React.useEffect(() => {
+    if (isOpen) {
+      setName(profile.name);
+      setGrade(profile.grade);
+      setSchool(profile.school);
+      setCity(profile.city);
+      setCurrentTerm(profile.currentTerm);
+      setApiKeyInput(storage.getCustomApiKey());
+    }
+  }, [isOpen, profile]);
 
   if (!isOpen) return null;
 
@@ -53,8 +66,6 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     setShowConfirmClear(false);
     onClose();
   };
-
-  const [apiKeyInput, setApiKeyInput] = useState(storage.getCustomApiKey());
 
   const handleSaveApiKey = () => {
     storage.saveCustomApiKey(apiKeyInput);

@@ -9,6 +9,8 @@ import {
   ArrowRight,
   ArrowLeft,
   ChevronRight,
+  RotateCw,
+  HelpCircle,
   Check
 } from 'lucide-react';
 import { Challenge, QuizAttempt, Subject, SubjectId } from '../types';
@@ -17,6 +19,8 @@ interface ChallengeViewProps {
   subjects: Subject[];
   selectedSubjectId: SubjectId;
   onSelectSubject: (id: SubjectId) => void;
+  selectedTopicId?: string;
+  onSelectTopic?: (topicId: string) => void;
   challenges: Challenge[];
   attempts: QuizAttempt[];
   onSaveAttempt: (attempt: QuizAttempt) => void;
@@ -28,6 +32,8 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   subjects,
   selectedSubjectId,
   onSelectSubject,
+  selectedTopicId: externalTopicId,
+  onSelectTopic,
   challenges,
   attempts,
   onSaveAttempt,
@@ -35,27 +41,39 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   isGeneratingAI
 }) => {
   const currentSubject = subjects.find(s => s.id === selectedSubjectId) || subjects[0];
-  const [selectedTopicId, setSelectedTopicId] = useState<string>('');
+  const [internalTopicId, setInternalTopicId] = useState<string>(externalTopicId || '');
   const [activeChallengeIndex, setActiveChallengeIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [showHintIndex, setShowHintIndex] = useState(0);
   const [noticeMsg, setNoticeMsg] = useState<string>('');
 
+  // Sync external topic ID when prop changes
+  useEffect(() => {
+    if (externalTopicId !== undefined) {
+      setInternalTopicId(externalTopicId);
+      setActiveChallengeIndex(0);
+      setSelectedOption(null);
+      setIsAnswerSubmitted(false);
+      setShowHintIndex(0);
+    }
+  }, [externalTopicId]);
+
   // Reset indices and options when subject changes
   useEffect(() => {
-    setSelectedTopicId('');
     setActiveChallengeIndex(0);
     setSelectedOption(null);
     setIsAnswerSubmitted(false);
     setShowHintIndex(0);
   }, [selectedSubjectId]);
 
+  const activeTopicId = externalTopicId !== undefined ? externalTopicId : internalTopicId;
+
   // Filter challenges for current subject & topic
   const filteredChallenges = challenges.filter(c => {
     if (c.subjectId !== selectedSubjectId) return false;
-    if (selectedTopicId) {
-      return c.topicId === selectedTopicId;
+    if (activeTopicId) {
+      return c.topicId === activeTopicId;
     }
     return true;
   });
@@ -68,7 +86,10 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   const activeChallenge = filteredChallenges[safeIndex];
 
   const handleSelectTopic = (topicId: string) => {
-    setSelectedTopicId(topicId);
+    setInternalTopicId(topicId);
+    if (onSelectTopic) {
+      onSelectTopic(topicId);
+    }
     setActiveChallengeIndex(0);
     setSelectedOption(null);
     setIsAnswerSubmitted(false);
@@ -128,9 +149,9 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   };
 
   const handleGenerateNew = async () => {
-    const topic = currentSubject.topics.find(t => t.id === selectedTopicId) || currentSubject.topics[0];
+    const topic = currentSubject.topics.find(t => t.id === activeTopicId) || currentSubject.topics[0];
     const targetTopicName = topic?.name || 'General';
-    const targetTopicId = selectedTopicId || topic?.id;
+    const targetTopicId = activeTopicId || topic?.id;
 
     const generated = await onGenerateAIChallenge(selectedSubjectId, targetTopicName, targetTopicId);
     if (generated) {
@@ -138,7 +159,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
       setIsAnswerSubmitted(false);
       setShowHintIndex(0);
       setActiveChallengeIndex(0);
-      setNoticeMsg(`¡Nuevo reto de "${targetTopicName.slice(0, 30)}..." listo para resolver!`);
+      setNoticeMsg(`¡Nuevo reto de "${targetTopicName.slice(0, 35)}..." generado y listo para resolver!`);
       setTimeout(() => setNoticeMsg(''), 4500);
     }
   };
@@ -149,7 +170,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
   const accuracyPercent = subjectAttempts.length > 0 ? Math.round((correctCount / subjectAttempts.length) * 100) : 0;
 
   // Active topic object
-  const activeTopicObj = currentSubject.topics.find(t => t.id === selectedTopicId);
+  const activeTopicObj = currentSubject.topics.find(t => t.id === activeTopicId);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -202,9 +223,9 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
 
       {/* Filter by Topic and AI Generator Button */}
       <div className="space-y-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <Filter className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>Bloques temáticos de {currentSubject.shortName}:</span>
           </div>
 
@@ -212,6 +233,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
             onClick={handleGenerateNew}
             disabled={isGeneratingAI}
             className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 text-white transition-colors shrink-0 shadow-xs cursor-pointer"
+            title="Crea una nueva pregunta inédita adaptada al currículo oficial"
           >
             <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAI ? 'animate-spin' : ''}`} />
             <span>{isGeneratingAI ? 'Generando reto con IA...' : 'Crear reto con IA'}</span>
@@ -223,17 +245,17 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
           <button
             onClick={() => handleSelectTopic('')}
             className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              !selectedTopicId
+              !activeTopicId
                 ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50'
             }`}
           >
             Todos los bloques ({challenges.filter(c => c.subjectId === selectedSubjectId).length})
           </button>
 
-          {currentSubject.topics.map(topic => {
+          {currentSubject.topics.map((topic, tIdx) => {
             const countInTopic = challenges.filter(c => c.subjectId === selectedSubjectId && c.topicId === topic.id).length;
-            const isSelected = selectedTopicId === topic.id;
+            const isSelected = activeTopicId === topic.id;
 
             return (
               <button
@@ -242,12 +264,12 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
                 className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors truncate max-w-xs cursor-pointer ${
                   isSelected
                     ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50'
                 }`}
-                title={topic.name}
+                title={`Bloque ${tIdx + 1}: ${topic.name}`}
               >
-                <span>{topic.name}</span>
-                <span className={`ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full ${
+                <span>B{tIdx + 1}: {topic.name}</span>
+                <span className={`ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                   isSelected
                     ? 'bg-white/20 dark:bg-slate-900/20 text-white dark:text-slate-900'
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
@@ -263,53 +285,78 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
       {/* Challenge Card */}
       {activeChallenge ? (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
-          {/* Card header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 dark:text-slate-400 pb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-blue-600 dark:text-blue-400">
+          {/* Card header with topic indicator, question count and jump navigation */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 dark:text-slate-400 pb-3 border-b border-slate-100 dark:border-slate-800 gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-blue-600 dark:text-blue-400">
                 {currentSubject.name}
               </span>
               <span>·</span>
-              <span className="truncate max-w-xs">{activeChallenge.topicName}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-sm">
+                {activeChallenge.topicName}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2 font-mono">
-              <span className="text-slate-700 dark:text-slate-300 font-semibold">
+            {/* Question Counter & Jump buttons */}
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">
                 Reto {safeIndex + 1} de {filteredChallenges.length}
               </span>
-              {selectedTopicId && (
-                <span className="text-[11px] text-slate-400">
-                  (en este bloque)
-                </span>
+
+              {filteredChallenges.length > 1 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handlePrevChallenge}
+                    className="p-1 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                    title="Pregunta anterior"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleNextChallenge}
+                    className="p-1 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                    title="Pregunta siguiente"
+                  >
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Quick jump question selector if multiple questions exist */}
+          {/* Question Selector Carousel / Badges */}
           {filteredChallenges.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <span className="text-[11px] text-slate-400 mr-1">Preguntas:</span>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+              <span className="text-[11px] text-slate-400 font-medium mr-1 shrink-0">Navegar preguntas:</span>
               {filteredChallenges.map((ch, idx) => {
                 const isCurrent = idx === safeIndex;
                 const attempt = attempts.find(a => a.challengeId === ch.id);
-                let btnColor = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+                let btnColor = 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-transparent';
+                let icon = null;
+
                 if (attempt) {
-                  btnColor = attempt.isCorrect 
-                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-400'
-                    : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-400';
+                  if (attempt.isCorrect) {
+                    btnColor = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-400';
+                    icon = <Check className="w-2.5 h-2.5 inline ml-0.5" />;
+                  } else {
+                    btnColor = 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-400';
+                    icon = <XCircle className="w-2.5 h-2.5 inline ml-0.5" />;
+                  }
                 }
+
                 if (isCurrent) {
-                  btnColor = 'ring-2 ring-blue-600 font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300';
+                  btnColor = 'ring-2 ring-blue-600 font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-500';
                 }
 
                 return (
                   <button
                     key={ch.id}
                     onClick={() => handleJumpToChallenge(idx)}
-                    className={`w-7 h-7 rounded-lg text-xs font-mono flex items-center justify-center transition-all cursor-pointer ${btnColor}`}
-                    title={`Ir al reto ${idx + 1}`}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center justify-center gap-1 transition-all cursor-pointer shrink-0 ${btnColor}`}
+                    title={`Ver reto ${idx + 1}`}
                   >
-                    {idx + 1}
+                    <span>Reto {idx + 1}</span>
+                    {icon}
                   </button>
                 );
               })}
@@ -327,7 +374,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
               const isSelected = selectedOption === index;
               const isCorrect = index === activeChallenge.correctIndex;
 
-              let optionClasses = 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-blue-400';
+              let optionClasses = 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500';
 
               if (isAnswerSubmitted) {
                 if (isCorrect) {
@@ -335,7 +382,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
                 } else if (isSelected && !isCorrect) {
                   optionClasses = 'bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-900 dark:text-rose-200';
                 } else {
-                  optionClasses = 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500';
+                  optionClasses = 'opacity-60 bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400';
                 }
               } else if (isSelected) {
                 optionClasses = 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 text-blue-900 dark:text-blue-200 ring-1 ring-blue-600';
@@ -368,11 +415,11 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
 
           {/* Socratic Hint helper before submitting */}
           {!isAnswerSubmitted && activeChallenge.hints && activeChallenge.hints.length > 0 && (
-            <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-900 text-xs">
+            <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-900 text-xs">
               <div className="flex items-center justify-between text-amber-900 dark:text-amber-200 font-semibold mb-1">
                 <span className="flex items-center gap-1.5">
                   <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                  Pista socrática para ayudarte a pensar
+                  Pista socrática para orientar tu razonamiento
                 </span>
                 {showHintIndex < activeChallenge.hints.length - 1 && (
                   <button
@@ -383,7 +430,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
                   </button>
                 )}
               </div>
-              <p className="text-amber-800 dark:text-amber-300">
+              <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
                 {activeChallenge.hints[showHintIndex]}
               </p>
             </div>
@@ -400,7 +447,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
                 {selectedOption === activeChallenge.correctIndex ? (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    ¡Excelente razonamiento! Has acertado.
+                    ¡Excelente razonamiento! Respuesta correcta.
                   </>
                 ) : (
                   <>
@@ -415,8 +462,8 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          {/* Action buttons footer */}
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex-wrap">
             <div className="flex items-center gap-2">
               {filteredChallenges.length > 1 && (
                 <button
@@ -432,22 +479,33 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
                 onClick={handleGenerateNew}
                 disabled={isGeneratingAI}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-xs font-medium transition-colors cursor-pointer"
-                title="Generar otra pregunta con IA"
+                title="Generar otra pregunta inédita con IA para este bloque"
               >
-                <Sparkles className={`w-3 h-3 ${isGeneratingAI ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Generar otro reto</span>
+                <Sparkles className={`w-3.5 h-3.5 ${isGeneratingAI ? 'animate-spin' : ''}`} />
+                <span>Generar otro reto</span>
               </button>
             </div>
 
-            <div>
+            <div className="flex items-center gap-2">
               {!isAnswerSubmitted ? (
-                <button
-                  onClick={handleSubmitAnswer}
-                  disabled={selectedOption === null}
-                  className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
-                >
-                  Comprobar respuesta
-                </button>
+                <>
+                  {filteredChallenges.length > 1 && (
+                    <button
+                      onClick={handleNextChallenge}
+                      className="px-3 py-2 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                      title="Pasar a la siguiente pregunta sin responder ahora"
+                    >
+                      Saltar reto →
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSubmitAnswer}
+                    disabled={selectedOption === null}
+                    className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 dark:disabled:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                  >
+                    Comprobar respuesta
+                  </button>
+                </>
               ) : (
                 <button
                   onClick={handleNextChallenge}
@@ -470,7 +528,7 @@ export const ChallengeView: React.FC<ChallengeViewProps> = ({
               {activeTopicObj ? activeTopicObj.name : 'Bloque seleccionado'}
             </h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Aún no hay retos en este bloque temático o has completado todos los disponibles. Haz clic abajo para crear uno con IA adaptado al currículo.
+              Aún no hay retos creados en este bloque temático específico. Haz clic a continuación para generar uno al instante con IA adaptado al currículo.
             </p>
           </div>
           <button

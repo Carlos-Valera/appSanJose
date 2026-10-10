@@ -271,11 +271,27 @@ export const storage = {
   },
 
   getChallenges(): Challenge[] {
+    const shuffleChallenge = (c: Challenge): Challenge => {
+      if (!c.options || c.options.length < 2) return c;
+      const correctText = c.options[c.correctIndex];
+      let hash = 0;
+      for (let i = 0; i < c.id.length; i++) hash = (hash * 31 + c.id.charCodeAt(i)) & 0xffffffff;
+      const shuffled = [...c.options];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.abs((hash + i * 17) % (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return {
+        ...c,
+        options: shuffled,
+        correctIndex: shuffled.indexOf(correctText)
+      };
+    };
+
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CHALLENGES);
-      if (!data) return INITIAL_CHALLENGES;
+      if (!data) return INITIAL_CHALLENGES.map(shuffleChallenge);
       const customList = JSON.parse(data) as Challenge[];
-      // Merge initial challenges with any custom generated challenges
       const customIds = new Set(customList.map(c => c.id));
       const merged = [...customList];
       for (const init of INITIAL_CHALLENGES) {
@@ -283,9 +299,9 @@ export const storage = {
           merged.push(init);
         }
       }
-      return merged;
+      return merged.map(shuffleChallenge);
     } catch {
-      return INITIAL_CHALLENGES;
+      return INITIAL_CHALLENGES.map(shuffleChallenge);
     }
   },
   saveChallenges(challenges: Challenge[]): void {

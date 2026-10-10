@@ -1,0 +1,8 @@
+{
+  "name": "TutorSanJose - Tutor 2º ESO",
+  "description": "Tutor socrático personalizado para 2º de ESO (IES San José, Cuenca). Resuelve dudas con método socrático, prepara exámenes, retos y seguimiento académico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
